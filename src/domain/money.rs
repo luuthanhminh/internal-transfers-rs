@@ -195,3 +195,67 @@ mod tests {
         );
     }
 }
+
+/// Property-based tests: instead of hand-picked examples, generate thousands
+/// of inputs and check rules that must hold for every one of them.
+#[cfg(test)]
+mod properties {
+    use super::*;
+    use proptest::prelude::*;
+
+    /// Every spelling the documented grammar allows: `0` or no leading zero,
+    /// at most 20 integer digits, an optional fraction of 1 to 18 digits.
+    const VALID_AMOUNT: &str = "(0|[1-9][0-9]{0,19})(\\.[0-9]{1,18})?";
+
+    /// The canonical rendering: plain digits, no exponent, no trailing zeros.
+    fn is_canonical(rendered: &str) -> bool {
+        let digits_and_point = rendered.bytes().all(|b| b.is_ascii_digit() || b == b'.');
+        let no_trailing_zero = !rendered.contains('.') || !rendered.ends_with(['0', '.']);
+        digits_and_point && no_trailing_zero
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(2_000))]
+
+        #[test]
+        fn every_valid_amount_is_accepted_exactly_and_round_trips(input in VALID_AMOUNT) {
+            let money = Money::parse(&input).map_err(|e| TestCaseError::fail(format!("{input:?}: {e}")))?;
+            let rendered = format_amount(money.as_decimal());
+            prop_assert!(is_canonical(&rendered), "{input:?} rendered as {rendered:?}");
+            // Never rounded: the rendered value is numerically the input, and
+            // parsing the rendered form gives the same value back.
+            let reparsed = Money::parse(&rendered).map_err(|e| TestCaseError::fail(format!("{rendered:?}: {e}")))?;
+            prop_assert_eq!(reparsed.as_decimal(), money.as_decimal());
+            prop_assert_eq!(BigDecimal::from_str(&input).ok(), Some(money.as_decimal().clone()));
+        }
+
+        #[test]
+        fn any_input_is_handled_without_panicking(input in "\\PC{0,48}") {
+            // Accepted or rejected, but never a panic; and anything accepted
+            // obeys the same round trip as above.
+            if let Ok(money) = Money::parse(&input) {
+                let rendered = format_amount(money.as_decimal());
+                prop_assert!(is_canonical(&rendered), "{input:?} rendered as {rendered:?}");
+                prop_assert_eq!(BigDecimal::from_str(&input).ok(), Some(money.as_decimal().clone()));
+            }
+        }
+
+        #[test]
+        fn more_than_18_decimal_places_is_rejected_never_rounded(integer in "[1-9][0-9]{0,5}", fraction in "[0-9]{19,30}") {
+            prop_assert_eq!(Money::parse(&format!("{integer}.{fraction}")), Err(MoneyError::TooPrecise));
+        }
+
+        #[test]
+        fn a_minus_sign_is_always_a_negative_or_not_positive_error(input in VALID_AMOUNT) {
+            let negative = format!("-{input}");
+            prop_assert_eq!(Money::parse(&negative), Err(MoneyError::Negative));
+            prop_assert_eq!(Money::parse_positive(&negative), Err(MoneyError::NotPositive));
+        }
+
+        #[test]
+        fn a_transfer_amount_is_rejected_exactly_when_it_is_zero(input in VALID_AMOUNT) {
+            let is_zero = Money::parse(&input).map(|m| m.as_decimal().is_zero()).unwrap_or(false);
+            prop_assert_eq!(Money::parse_positive(&input).is_err(), is_zero);
+        }
+    }
+}

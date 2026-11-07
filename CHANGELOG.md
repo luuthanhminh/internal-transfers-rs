@@ -8,11 +8,44 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Property-based tests (`proptest`) for amount parsing: every valid spelling
+  round-trips exactly, any input is handled without a panic, more than 18
+  decimal places is rejected.
+- HTTP load test with k6 (`loadtest/`, `make loadtest`, CI job `load-test`):
+  random and opposite-direction transfers, idempotent retries and reads;
+  fails on any 5xx, a changed total, a negative balance or a missed latency
+  budget. The CI job also checks that SIGTERM drains and exits 0.
+- CI job `coverage` (`cargo llvm-cov`), with the summary on the run page.
+- Security workflow: CodeQL for Rust and zizmor over the workflows.
+- Release workflow: image to GHCR on a `v*` tag with SBOM, SLSA provenance,
+  a build-provenance attestation and a keyless cosign signature.
+- `deploy/`: single-host deployment behind a Cloudflare tunnel (no inbound
+  ports), Caddy edge, internal-only database network, hardened containers,
+  migrations as a release step, and `deploy.sh` that verifies the image
+  signature, deploys by digest and prints the rollback command.
+  Runbook in `docs/deployment.md`.
+- Agent harness: `CLAUDE.md`, `.claude/settings.json` (deny edits to applied
+  migrations, reading `.env`, push/reset/clean) and hooks (`cargo fmt` after
+  edits, a Stop hook that refuses to finish with a failing fmt or clippy).
+  `docs/ai-assisted-delivery.md` describes the whole setup.
+
 - CI workflow `security` on every push and weekly: `cargo deny check`
   (RustSec advisories, yanked crates, licenses, crate sources; `deny.toml`),
   gitleaks over the git history, Trivy over the runtime image. Weekly
   Dependabot updates for Cargo (patch releases grouped), Docker (except the
   Rust image, kept in step with `rust-toolchain.toml`) and GitHub Actions.
+
+### Changed
+
+- Every GitHub Action is pinned to a commit SHA, jobs get a read-only token
+  and no persisted git credentials; container images are pinned by digest
+  (Dockerfile, docker compose, CI services) and Dependabot updates the
+  compose digests.
+
+### Fixed
+
+- README: the idempotency limitation now describes the only case left (a key
+  reused while its original request is still in flight).
 
 ## 0.1.1 - 2026-11-06
 

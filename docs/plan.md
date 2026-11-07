@@ -15,6 +15,7 @@ the commit that makes the change.
 | S5 Production readiness | Run it for real | OpenAPI for business endpoints, TLS to managed PostgreSQL, migrations as a release step and forward-only migration rules (ADR 0006), pinned images, connection budget | Twelve-factor checklist passes |
 | S6 Pipeline | CI follow-ups | Toolchain from `rust-toolchain.toml`, pinned service images, a job that checks every commit of a push or PR | CI reproduces local results |
 | S7 Docs and release | Hand over | Final README, architecture doc with diagrams, project skills, CHANGELOG `0.1.0`, tag `v0.1.0` | A new reader can run, test and change the service from the docs |
+| S8 Harden and ship | Run it in public | Agent guardrails (settings, hooks), property tests, k6 load test in CI, coverage, CodeQL and workflow lint, digest pins, signed release images, tunnel-only deployment with a release-step migration | `make loadtest` green in CI; the tagged image is signed and serves the public URL |
 
 ## S3 task breakdown
 

@@ -56,6 +56,10 @@ this table go deeper into the main ones.
 | 19 | Set the migration policy and drew the remaining diagrams | Schema changes on a money table must never block transfers or fail on existing data | [ADR 0006](adr/0006-forward-only-migrations.md): forward-only, `NOT VALID` constraints, upgrade tests |
 | 20 | Third review on the latest changes | A new constraint can break an upgrade of existing data; sleeps make tests flaky | Balance limit added `NOT VALID` with an upgrade test; lock tests wait on PostgreSQL state |
 | 21 | Final check from an empty directory | Trust the result only after running it the way a newcomer would | Clone → `docker compose up` → README examples → `make check` → benchmark, all green |
+| 22 | Turned the agent rules into guardrails | A rule an agent can ignore is a suggestion; the important ones should be enforced | `.claude/settings.json` (deny edits to applied migrations, `.env` reads, push/reset) and hooks (fmt after edit, lint gate on Stop); [AI-assisted delivery](ai-assisted-delivery.md) |
+| 23 | Tested from the outside | Integration tests run in-process; does the real image hold the invariants over HTTP? | Property tests for the money parser; k6 load test in CI checking conservation, no negatives, no 5xx, single-execution replays |
+| 24 | Hardened the supply chain | The code is only as trustworthy as what builds and runs it | Actions and images pinned by SHA/digest, CodeQL, zizmor, coverage; signed release images with SBOM and provenance |
+| 25 | Shipped it | A deployment shows the operational design works, not only that it is described | Tunnel-only host, migrations as a release step, signature-verified deploy, rollback by digest ([deployment](deployment.md)) |
 
 ## 1. Read the brief for what must never go wrong
 
@@ -203,4 +207,5 @@ without the fix. What they caught:
 | Why strings for amounts? | Floats cannot represent most decimals exactly; a JSON number may already be rounded before the server sees it |
 | How would it scale? | Stateless service, scale horizontally; the limit is one hot account's row lock. Next: sub-accounts or batching for hot accounts, read replicas for balances, ledger partitioning, sharding by account with a saga for cross-shard transfers |
 | How do you know the tests are not passing by luck? | Each guard test was shown to fail with its bug reintroduced; concurrency tests assert invariants; lock-dependent tests wait on PostgreSQL state, not sleeps |
-| What would you add next? | Mandatory, client-scoped idempotency keys that also store failures; metrics; a per-request deadline; static analysis (CodeQL) in CI |
+| How was the AI agent kept honest? | Context it must read (AGENTS.md, ADRs), a skill per phase, guardrails it cannot bypass (clippy denies, settings deny rules, Stop hook), and evidence rules: quoted `make check`, RED-proven tests, fresh-session reviews ([AI-assisted delivery](ai-assisted-delivery.md)) |
+| What would you add next? | Mandatory, client-scoped idempotency keys that also store failures; Prometheus metrics and an SLO on transfer latency; a per-request deadline; double-entry ledger rows |

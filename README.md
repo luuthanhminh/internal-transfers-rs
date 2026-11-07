@@ -1,19 +1,40 @@
 # internal-transfers
 
+[![CI](https://github.com/luuthanhminh/internal-transfers-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/luuthanhminh/internal-transfers-rs/actions/workflows/ci.yml)
+[![Security](https://github.com/luuthanhminh/internal-transfers-rs/actions/workflows/security.yml/badge.svg)](https://github.com/luuthanhminh/internal-transfers-rs/actions/workflows/security.yml)
+
 An HTTP service for moving money between internal accounts, written in Rust
 (axum + sqlx) on PostgreSQL. It creates accounts, reports balances, and executes
 transfers that stay correct under concurrent load.
+
+Live demo: **https://transfers.minhlt.com/docs** (interactive API reference;
+rate-limited, data is disposable).
+
+## For reviewers: a 10-minute tour
+
+| If you want to see | Look at |
+|---|---|
+| It runs | `docker compose up --build`, then the curl commands under *Quick start* |
+| How correctness under concurrency is achieved | *Transfer algorithm and concurrency* below, then [`src/db/transfers.rs`](src/db/transfers.rs) |
+| That it is proven, not assumed | [`tests/api/concurrency.rs`](tests/api/concurrency.rs), the property tests in [`src/domain/money.rs`](src/domain/money.rs), the [locking benchmark](docs/research/locking-benchmark.md) |
+| Behaviour under real HTTP load | [loadtest/](loadtest/README.md): k6 in CI on every push, money conserved, no 5xx |
+| How the work was done with an AI agent, and how its code was reviewed | [docs/ai-assisted-delivery.md](docs/ai-assisted-delivery.md), [AGENTS.md](AGENTS.md), [`.claude/`](.claude/) |
+| Decisions and their alternatives | [docs/approach.md](docs/approach.md), [docs/adr/](docs/adr/) |
+| Supply chain and deployment | [docs/deployment.md](docs/deployment.md): pinned and signed images, SBOM, provenance, tunnel-only host |
 
 ## Docs
 
 | Document | What it covers |
 |---|---|
+| [docs/ai-assisted-delivery.md](docs/ai-assisted-delivery.md) | How an AI coding agent was set up, constrained and reviewed to build this |
 | [docs/approach.md](docs/approach.md) | Engineering approach: timeline of activities, reasoning and outcomes |
 | [docs/requirements.md](docs/requirements.md) | Scope, assumptions with chosen defaults, acceptance criteria |
 | [docs/architecture.md](docs/architecture.md) | Components, request flow, transfer algorithm, schema |
 | [docs/adr/](docs/adr/) | Decisions: stack, money representation, locking, idempotency, retries and errors, migrations |
 | [docs/research/](docs/research/) | Locking benchmark, pitfalls and the test plan |
 | [docs/plan.md](docs/plan.md) | Delivery stages |
+| [docs/deployment.md](docs/deployment.md) | Release pipeline, supply-chain controls, single-host deployment, rollback |
+| [loadtest/README.md](loadtest/README.md) | HTTP load test: scenarios, pass criteria, how to read the results |
 | [CHANGELOG.md](CHANGELOG.md) | Release notes |
 | [AGENTS.md](AGENTS.md) | How to change the code safely (for agents and humans) |
 
@@ -269,21 +290,28 @@ Ranges are from two runs; transfers are random, so exact numbers vary.
 - Every response carries `X-Request-Id` (the caller's value, or a new UUID); it
   is recorded on the request's log span, so one request can be followed
   through the logs.
-- Docker base images are pinned; BuildKit cache mounts avoid recompiling
-  dependencies on every build.
+- Docker base images are pinned by tag and digest; BuildKit cache mounts avoid
+  recompiling dependencies on every build.
 - Security checks (`.github/workflows/security.yml`, on every push and weekly):
   `cargo deny check` for RustSec advisories, yanked crates, licenses and crate
   sources (`deny.toml`); gitleaks over the whole git history; Trivy over the
-  runtime image (HIGH/CRITICAL with a fix). Dependabot opens weekly update PRs
-  for Cargo (patch releases grouped, minors separately), Docker and GitHub
-  Actions; the Rust build image is bumped by hand together with
-  `rust-toolchain.toml`.
+  runtime image (HIGH/CRITICAL with a fix); CodeQL static analysis of the Rust
+  code; zizmor over the workflows themselves. Every action is pinned to a
+  commit SHA and every job gets a read-only token unless it needs more.
+  Dependabot opens weekly update PRs for Cargo (patch releases grouped, minors
+  separately), Docker, docker compose digests and GitHub Actions; the Rust
+  build image is bumped by hand together with `rust-toolchain.toml`.
+- Releases (`.github/workflows/release.yml`, on a `v*` tag) publish the image
+  to GHCR with an SBOM, SLSA build provenance and a keyless cosign signature;
+  `deploy/deploy.sh` refuses any image not signed by that workflow
+  ([deployment](docs/deployment.md)).
 - No `unwrap`/`expect`/`panic!` outside tests (enforced by clippy lints).
 
 ## Tests
 
-`make test` runs 15 unit tests (amount parsing and formatting, ids,
-configuration) and 63
+`make test` runs 20 unit tests (amount parsing and formatting, ids,
+configuration), including 5 property-based tests that check the amount parser
+on 2,000 generated inputs each, and 63
 integration tests that go through the real router against PostgreSQL. Each
 integration test gets its own freshly migrated database (`#[sqlx::test]`);
 `tests/api/migrations.rs` instead starts from an older schema with data in it
@@ -308,7 +336,20 @@ transactions really overlap:
 Each concurrency safeguard was checked by re-introducing the bug and watching
 the matching test fail: locking in request order (deadlocks → 503), dropping
 `FOR UPDATE` (overspend blocked only by the CHECK → 500), omitting `COMMIT`, and
-claiming the idempotency key with a plain insert (→ 500).
+claiming the idempotency key with a plain insert (→ 500). The property tests
+were checked the same way (no normalisation of the output, one decimal place
+too many).
+
+Beyond `make test`, CI runs on every push:
+
+- **every-commit**: each commit of the push builds, passes fmt, clippy and the
+  tests, and starts and stops cleanly on its own;
+- **coverage**: line coverage of all tests (`cargo llvm-cov`), on the run
+  summary and as an lcov artifact;
+- **load-test**: the Docker image under concurrent HTTP traffic with k6
+  (`make loadtest` locally): total balance unchanged, no negative balance, no
+  5xx, replays move money once, p95 latency within budget; then SIGTERM must
+  drain and exit 0. Details in [loadtest/README.md](loadtest/README.md).
 
 ## Limitations and possible improvements
 
@@ -319,8 +360,9 @@ claiming the idempotency key with a plain insert (→ 500).
   stored; a production API would require it and also persist failed outcomes.
   Keys are kept forever (they live on the ledger row) and are global, not
   scoped per client; with authentication they should be scoped to the caller.
-  When a key is reused for a different transfer to a missing account, the 404
-  is reported before the key conflict.
+  While the original request is still in flight, reusing its key for a
+  transfer to a missing account is answered `404` rather than
+  `idempotency_key_reused` (once it has committed, the key check comes first).
 - **Scaling.** The service is stateless, so it scales horizontally; correctness
   relies only on PostgreSQL. Beyond one primary: read replicas for balance
   queries, partitioning the ledger by time, and sharding by account (cross-shard
@@ -328,8 +370,9 @@ claiming the idempotency key with a plain insert (→ 500).
 - **Ledger model.** A double-entry ledger (one debit and one credit row per
   transfer) would be the accounting-standard representation.
 - **Not included:** authentication, listing transaction history over HTTP,
-  pagination, metrics endpoint (Prometheus), rate limiting, an overall HTTP
-  request timeout, static analysis (SAST, e.g. CodeQL), multiple currencies.
+  pagination, metrics endpoint (Prometheus), rate limiting inside the service
+  (the deployment applies it at the edge), an overall HTTP request timeout,
+  multiple currencies.
 - **Connection budget.** Each instance opens up to `DB_MAX_CONNECTIONS`;
   `instances × DB_MAX_CONNECTIONS` must stay below PostgreSQL's
   `max_connections` (or put PgBouncer in transaction mode in front).

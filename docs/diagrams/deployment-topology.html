@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deployment topology on one GCP VM</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame { max-width: 1200px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg { width: 100%; min-width: 900px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Architecture · Secure paved road</p>
+    <h1>Deployment topology</h1>
+    <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="deployment-topology-title deployment-topology-desc">
+      <title id="deployment-topology-title">Deployment topology on one GCP VM</title>
+      <desc id="deployment-topology-desc">Architecture of the demo deployment on one GCP VM: client traffic reaches the app only through Cloudflare and an outbound cloudflared tunnel, admin SSH arrives only through IAP, and other inbound internet traffic is blocked at the VM boundary.</desc>
+      <defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+<rect x="464" y="104" width="776" height="488" rx="8" fill="rgba(235,108,54,0.03)" stroke="rgba(235,108,54,0.50)" stroke-width="1" stroke-dasharray="4,4"/>
+<rect x="480" y="98" width="216" height="12" rx="2" fill="#f5f5f5"/>
+<text x="588" y="107" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">GCP VM · E2-SMALL · PRIVATE SUBNET</text>
+<text x="480" y="128" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">no external IP · firewall allows no inbound from the internet</text>
+<rect x="488" y="152" width="728" height="160" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.14)" stroke-width="0.8"/>
+<rect x="504" y="146" width="92" height="12" rx="2" fill="#f5f5f5"/>
+<text x="550" y="155" fill="rgba(45,49,66,0.55)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NETWORK: EDGE</text>
+<rect x="688" y="384" width="528" height="176" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.14)" stroke-width="0.8"/>
+<rect x="704" y="378" width="256" height="12" rx="2" fill="#f5f5f5"/>
+<text x="832" y="387" fill="rgba(45,49,66,0.55)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NETWORK: BACKEND · INTERNAL, NO ROUTE OUT</text>
+<path d="M 160,88 H 224" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 512,240 H 400" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 312,200 V 128" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 672,240 H 712" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 912,240 H 952" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 1072,280 V 432" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 912,472 H 952" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<path d="M 160,472 H 224" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 400,472 H 464" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="224" y="352" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">internet</text>
+<path d="M 280,348 H 448" fill="none" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="4,3"/>
+<circle cx="456" cy="348" r="8" fill="#f5f5f5" stroke="#4f5d75" stroke-width="1.2"/><path d="M 453,345 L 459,351 M 459,345 L 453,351" stroke="#4f5d75" stroke-width="1.2"/>
+<rect x="172" y="68" width="40" height="12" rx="2" fill="#f5f5f5"/>
+<text x="192" y="77" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">HTTPS</text>
+<rect x="402" y="220" width="60" height="12" rx="2" fill="#f5f5f5"/>
+<text x="432" y="229" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DIALS OUT</text>
+<rect x="320" y="158" width="44" height="12" rx="2" fill="#f5f5f5"/>
+<text x="342" y="167" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">TUNNEL</text>
+<rect x="1080" y="342" width="28" height="12" rx="2" fill="#f5f5f5"/>
+<text x="1094" y="351" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SQL</text>
+<rect x="172" y="452" width="40" height="12" rx="2" fill="#f5f5f5"/>
+<text x="192" y="461" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ADMIN</text>
+<rect x="408" y="452" width="48" height="12" rx="2" fill="#f5f5f5"/>
+<text x="432" y="461" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SSH :22</text>
+<rect x="340" y="328" width="48" height="12" rx="2" fill="#f5f5f5"/>
+<text x="364" y="337" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">BLOCKED</text>
+<rect x="40" y="56" width="120" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="40" y="56" width="120" height="64" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+<text x="100" y="85" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Client</text>
+<text x="100" y="99" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">public internet</text>
+<rect x="224" y="48" width="176" height="80" rx="6" fill="#f5f5f5"/>
+<rect x="224" y="48" width="176" height="80" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+<rect x="232" y="56" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.22)" stroke-width="0.8"/>
+<text x="248" y="65" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EDGE</text>
+<text x="312" y="82" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Cloudflare edge</text>
+<text x="312" y="96" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">transfers.minhlt.com</text>
+<text x="312" y="110" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">TLS · WAF · rate limit</text>
+<rect x="224" y="200" width="176" height="80" rx="6" fill="#f5f5f5"/>
+<rect x="224" y="200" width="176" height="80" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+<rect x="232" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.22)" stroke-width="0.8"/>
+<text x="246" y="217" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">GCP</text>
+<text x="312" y="241" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Cloud NAT</text>
+<text x="312" y="255" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">egress only</text>
+<rect x="40" y="440" width="120" height="64" rx="6" fill="#f5f5f5"/>
+<rect x="40" y="440" width="120" height="64" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+<text x="100" y="469" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Engineer</text>
+<text x="100" y="483" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">admin access</text>
+<rect x="224" y="432" width="176" height="80" rx="6" fill="#f5f5f5"/>
+<rect x="224" y="432" width="176" height="80" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+<rect x="232" y="440" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.22)" stroke-width="0.8"/>
+<text x="246" y="449" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">GCP</text>
+<text x="312" y="466" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">IAP TCP forwarding</text>
+<text x="312" y="480" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">SSH via OS Login</text>
+<text x="312" y="494" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">from Google IAP range</text>
+<rect x="512" y="200" width="160" height="80" rx="6" fill="#f5f5f5"/>
+<rect x="512" y="200" width="160" height="80" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<rect x="520" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+<text x="534" y="217" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">TUN</text>
+<text x="592" y="241" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">cloudflared</text>
+<text x="592" y="255" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">outbound tunnel</text>
+<rect x="712" y="200" width="200" height="80" rx="6" fill="#f5f5f5"/>
+<rect x="712" y="200" width="200" height="80" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<rect x="720" y="208" width="36" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+<text x="738" y="217" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PROXY</text>
+<text x="812" y="227" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Caddy</text>
+<text x="812" y="241" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">:8081 · headers</text>
+<text x="812" y="255" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">16 KB body limit</text>
+<text x="812" y="269" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">JSON access log</text>
+<rect x="952" y="200" width="240" height="80" rx="6" fill="#f5f5f5"/>
+<rect x="952" y="200" width="240" height="80" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+<rect x="960" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+<text x="974" y="217" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+<text x="1072" y="234" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">internal-transfers</text>
+<text x="1072" y="248" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">:8080 · non-root · 256 MB</text>
+<text x="1072" y="262" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">read-only fs · cap_drop ALL</text>
+<rect x="712" y="432" width="200" height="80" rx="6" fill="#f5f5f5"/>
+<rect x="712" y="432" width="200" height="80" rx="6" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<rect x="720" y="440" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.22)" stroke-width="0.8"/>
+<text x="734" y="449" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">JOB</text>
+<text x="812" y="473" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">migrate job</text>
+<text x="812" y="487" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">one-shot release step</text>
+<rect x="952" y="432" width="240" height="80" rx="6" fill="#f5f5f5"/>
+<rect x="952" y="432" width="240" height="80" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+<rect x="960" y="440" width="20" height="12" rx="2" fill="transparent" stroke="rgba(79,93,117,0.50)" stroke-width="0.8"/>
+<text x="970" y="449" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DB</text>
+<text x="1072" y="473" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">PostgreSQL 17</text>
+<text x="1072" y="487" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">volume pgdata</text>
+<line x1="40" y1="632" x2="1240" y2="632" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+<text x="40" y="652" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="112" y="644" width="14" height="10" rx="2" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+<text x="132" y="652" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Service</text>
+<rect x="196" y="644" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<text x="216" y="652" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Container</text>
+<rect x="292" y="644" width="14" height="10" rx="2" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+<text x="312" y="652" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Data store</text>
+<rect x="392" y="644" width="14" height="10" rx="2" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.20)" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="412" y="652" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">One-shot job</text>
+<rect x="500" y="644" width="14" height="10" rx="2" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+<text x="520" y="652" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Managed edge</text>
+<rect x="608" y="644" width="14" height="10" rx="2" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+<text x="628" y="652" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Actor</text>
+<rect x="684" y="644" width="14" height="10" rx="2" fill="rgba(235,108,54,0.03)" stroke="rgba(235,108,54,0.50)" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="704" y="652" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Trust boundary</text>
+<line x1="804" y1="649" x2="832" y2="649" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<text x="840" y="652" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Public path</text>
+<line x1="924" y1="649" x2="952" y2="649" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="960" y="652" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Internal / admin</text>
+<line x1="1068" y1="649" x2="1088" y2="649" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="4,3"/>
+<circle cx="1092" cy="649" r="6" fill="#f5f5f5" stroke="#4f5d75" stroke-width="1.2"/><path d="M 1090,647 L 1094,651 M 1094,647 L 1090,651" stroke="#4f5d75" stroke-width="1.2"/>
+<text x="1104" y="652" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Blocked</text>
+<text x="112" y="676" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">arrows point from the side that opens the connection; replies return on the same connection</text>
+    </svg>
+  </div>
+</body>
+</html>

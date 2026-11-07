@@ -25,33 +25,7 @@ by the client.
 - If another transaction holding the same key is still in flight, `ON CONFLICT`
   waits for it and then reports the conflict cleanly.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor C as Client
-    participant S as Service
-    participant PG as PostgreSQL
-
-    C->>S: POST /transactions · Idempotency-Key: k1
-    S->>PG: lock accounts · INSERT ledger row (k1) ON CONFLICT DO NOTHING
-    PG-->>S: row returned → this request owns k1
-    S->>PG: update balances · COMMIT
-    S--xC: 201 (response lost: connection dropped)
-
-    rect rgba(37, 99, 235, 0.10)
-        C->>S: retry, same body · Idempotency-Key: k1
-        S->>PG: SELECT ledger row WHERE idempotency_key = k1
-        PG-->>S: found (before taking any lock)
-        S-->>C: 201 same transfer · Idempotent-Replayed: true
-    end
-
-    rect rgba(220, 38, 38, 0.08)
-        C->>S: different body · Idempotency-Key: k1
-        S-->>C: 422 idempotency_key_reused
-    end
-
-    Note over S,PG: If the first request is still in flight, the second INSERT … ON CONFLICT<br/>waits for it: commit → replay / 422, rollback → the second one proceeds
-```
+![Idempotency-Key claim and replay](../diagrams/adr0004-idempotency.png)
 
 ## Consequences
 

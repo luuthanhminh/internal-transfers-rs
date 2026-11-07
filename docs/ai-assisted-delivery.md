@@ -29,26 +29,7 @@ reproduce, and every guard test has been shown to fail without its fix.
 An agent is as good as the context it reads and the gates it cannot skip.
 The harness has four layers, from soft to hard.
 
-```mermaid
-flowchart TB
-    subgraph context["1 · Context: what the agent reads"]
-        direction LR
-        a["AGENTS.md<br/><small>invariants, layout, commands</small>"] ~~~ b["requirements + ADRs<br/><small>decisions with reasons</small>"] ~~~ c["CLAUDE.md<br/><small>imports AGENTS.md</small>"]
-    end
-    subgraph skills["2 · Skills: how each phase is done"]
-        direction LR
-        d["research · plan"] ~~~ e["implement · test-qa"] ~~~ f["review · debug"] ~~~ g["docs · release"]
-    end
-    subgraph guard["3 · Guardrails: what the agent cannot do"]
-        direction LR
-        h["compiler + clippy<br/><small>no unwrap/expect/panic,<br/>no unsafe, deny warnings</small>"] ~~~ i["settings.json<br/><small>deny push, reset, .env,<br/>edits to applied migrations</small>"] ~~~ j["hooks<br/><small>fmt after edit,<br/>lint gate on Stop</small>"]
-    end
-    subgraph proof["4 · Evidence: what counts as done"]
-        direction LR
-        k["make check output<br/><small>quoted, after the last edit</small>"] ~~~ l["RED-proof<br/><small>bug re-introduced, test fails</small>"] ~~~ m["CI on every commit<br/><small>+ coverage, load test, security</small>"]
-    end
-    context --> skills --> guard --> proof
-```
+![Agent harness in four layers](diagrams/agent-harness.png)
 
 ### 1. Context
 

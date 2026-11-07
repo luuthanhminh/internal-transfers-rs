@@ -34,18 +34,7 @@ refuses to start if an applied file was edited. Two risks remain:
 - **Expand / contract** for anything that changes the shape clients or the
   previous binary rely on:
 
-```mermaid
-flowchart LR
-    e["1 · Expand<br/>add nullable column,<br/>new table or index"]:::step
-    d["2 · Deploy code<br/>writes old + new,<br/>reads old"]:::step
-    b["3 · Backfill<br/>in small batches"]:::step
-    s["4 · Switch reads<br/>to the new shape"]:::step
-    c["5 · Contract<br/>drop the old column<br/>in a later release"]:::last
-    e --> d --> b --> s --> c
-
-    classDef step fill:#E0F2FE,stroke:#0284C7,stroke-width:1.5px,color:#0C4A6E
-    classDef last fill:#DCFCE7,stroke:#16A34A,stroke-width:1.5px,color:#14532D
-```
+![Expand / contract steps](../diagrams/adr0006-migrations.png)
 
 - **Separate role in production.** `internal-transfers migrate` runs as a role
   that owns the schema; the service runs with `RUN_MIGRATIONS=false` as a role

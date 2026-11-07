@@ -3,30 +3,7 @@
 The reasoning behind the code, in the order the work was done, for a technical
 conversation about it. Each entry points to where the evidence lives.
 
-```mermaid
-flowchart TB
-    subgraph think["Think"]
-        direction LR
-        a["1 · Read the brief<br/><small>what must never go wrong</small>"]:::think --> b["2 · Assumptions<br/><small>defaults, not blockers</small>"]:::think --> c["3 · Risks first<br/><small>pitfalls → tests</small>"]:::think
-    end
-    subgraph decide["Decide with evidence"]
-        direction LR
-        d["4 · Measure<br/><small>pgbench, 7 strategies</small>"]:::evidence --> e["5 · Decide<br/><small>ADRs 0001–0006</small>"]:::evidence
-    end
-    subgraph deliver["Build and ship"]
-        direction LR
-        f["6 · Build in stages<br/><small>every commit green</small>"]:::build --> g["7 · Prove it<br/><small>RED-proven tests, CI per commit</small>"]:::build --> h["8 · Review rounds<br/><small>fresh eyes, fix with tests</small>"]:::build --> i["9 · Production<br/><small>12-factor, limits</small>"]:::ship
-    end
-    think --> decide --> deliver
-
-    classDef think    fill:#FEF9C3,stroke:#CA8A04,stroke-width:1.5px,color:#713F12
-    classDef evidence fill:#DBEAFE,stroke:#1D4ED8,stroke-width:1.5px,color:#1E3A8A
-    classDef build    fill:#DCFCE7,stroke:#16A34A,stroke-width:1.5px,color:#14532D
-    classDef ship     fill:#EDE9FE,stroke:#7C3AED,stroke-width:1.5px,color:#3B0764
-    style think fill:transparent,stroke:#CA8A04,stroke-dasharray:4 3
-    style decide fill:transparent,stroke:#1D4ED8,stroke-dasharray:4 3
-    style deliver fill:transparent,stroke:#16A34A,stroke-dasharray:4 3
-```
+![Engineering approach in nine steps](diagrams/approach-overview.png)
 
 ## Engineering timeline
 

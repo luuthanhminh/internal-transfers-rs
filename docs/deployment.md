@@ -5,28 +5,20 @@ on the way. Everything here is code in the repository: `.github/workflows/releas
 `deploy/compose.yml`, `deploy/Caddyfile`, `deploy/deploy.sh`.
 
 The brief needs one instance and one database, so the target is a single
-Linux host with Docker. The same image and release step move unchanged to
-Kubernetes or a managed container service (notes at the end).
+Linux host with Docker. The public demo runs on a small GCP Compute Engine VM
+(e2-small, Debian 12) in a private subnet. The same image and release step
+move unchanged to Kubernetes or a managed container service (notes at the end).
 
 ## Topology
 
-```mermaid
-flowchart LR
-    client([Client]) -->|HTTPS| cf["Cloudflare<br/><small>TLS, WAF, rate limit</small>"]
-    cf -->|outbound tunnel| cfd["cloudflared"]
-    subgraph host["Docker host (no inbound ports)"]
-        subgraph edge["network: edge"]
-            cfd --> caddy["Caddy :8081<br/><small>headers, 16 KB body limit,<br/>JSON access log</small>"]
-            caddy --> app["internal-transfers :8080<br/><small>read-only fs, cap_drop ALL,<br/>non-root, 256 MB</small>"]
-        end
-        subgraph backend["network: backend (internal, no route out)"]
-            app --> db[("PostgreSQL 17<br/><small>volume pgdata</small>")]
-        end
-    end
-```
+![Deployment topology](diagrams/deployment-topology.png)
 
-- **No open port on the host.** `cloudflared` dials out to Cloudflare; the
-  origin IP is never published and nothing listens on the public interface.
+- **No public IP, no open port.** The VM has no external address and the
+  firewall admits nothing from the internet. `cloudflared` dials out to
+  Cloudflare through Cloud NAT, so the origin is never published.
+- **Admin access only through IAP.** SSH goes through Google's IAP TCP
+  forwarding with OS Login; the only inbound rule is tcp/22 from the IAP range.
+  The VM's service account has no IAM roles.
 - **The database cannot be reached from outside the host, and has no way out.**
   It lives on an `internal` network that only the app and the migration job join.
 - **Hardened containers.** App, migration job, Caddy and cloudflared run with
@@ -36,17 +28,7 @@ flowchart LR
 
 ## Supply chain: from tag to running image
 
-```mermaid
-flowchart LR
-    tag["git tag vX.Y.Z<br/><small>from green main</small>"] --> build["Release workflow<br/><small>docker build, pinned bases</small>"]
-    build --> ghcr[("ghcr.io<br/><small>image by digest</small>")]
-    build --> sbom["SBOM + SLSA provenance<br/><small>attached to the image</small>"]
-    build --> sign["cosign keyless signature<br/><small>bound to release.yml on a tag</small>"]
-    ghcr --> verify{"deploy.sh<br/>cosign verify"}
-    sign --> verify
-    verify -->|valid| run["migrate, then replace app"]
-    verify -->|invalid| stop([refuse])
-```
+![Supply chain from tag to running image](diagrams/supply-chain.png)
 
 | Control | Where |
 |---|---|
@@ -63,7 +45,10 @@ flowchart LR
 ## First-time setup
 
 1. **Host.** Any small Linux VM with Docker Engine + Compose v2, `cosign` and
-   `curl`. No firewall rule is needed beyond outbound HTTPS.
+   `curl`. No firewall rule is needed beyond outbound HTTPS. The demo VM is
+   provisioned with Terraform: a startup script installs Docker, a
+   checksum-pinned cosign (same major version as the release signer) and
+   clones this repository to `/opt/internal-transfers-rs`.
 2. **Tunnel and DNS.** In Cloudflare Zero Trust, create a tunnel, add the
    public hostname `transfers.<your-domain>` with service `http://caddy:8081`,
    and copy the tunnel token. Cloudflare creates the DNS record.

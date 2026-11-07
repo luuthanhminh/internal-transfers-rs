@@ -12,44 +12,12 @@ choosing (see [research/locking-benchmark.md](../research/locking-benchmark.md))
 
 Locking "source, then destination" can form a wait cycle:
 
-```mermaid
-sequenceDiagram
-    participant T1 as T1 · 1 → 2
-    participant R1 as row 1
-    participant R2 as row 2
-    participant T2 as T2 · 2 → 1
-
-    T1->>R1: FOR UPDATE ✓
-    T2->>R2: FOR UPDATE ✓
-    rect rgba(220, 38, 38, 0.12)
-        T1->>R2: FOR UPDATE · waits for T2
-        T2->>R1: FOR UPDATE · waits for T1
-        Note over T1,T2: wait cycle → PostgreSQL aborts one transfer (40P01)
-    end
-```
+![Deadlock when locking source then destination](../diagrams/adr0003-deadlock.png)
 
 Locking in ascending id order cannot: both transfers ask for row 1 first, so
 one waits and both succeed:
 
-```mermaid
-sequenceDiagram
-    participant U1 as U1 · 1 → 2
-    participant R1 as row 1
-    participant R2 as row 2
-    participant U2 as U2 · 2 → 1
-
-    U1->>R1: FOR UPDATE ✓
-    U2->>R1: FOR UPDATE · waits for U1
-    U1->>R2: FOR UPDATE ✓
-    rect rgba(22, 163, 74, 0.12)
-        Note over U1: debit 1 · credit 2 · COMMIT
-    end
-    R1-->>U2: lock granted
-    U2->>R2: FOR UPDATE ✓
-    rect rgba(22, 163, 74, 0.12)
-        Note over U2: sees U1's balances · debit 2 · credit 1 · COMMIT
-    end
-```
+![Ordered locking: both transfers lock row 1 first](../diagrams/adr0003-ordered-locks.png)
 
 ## Decision
 

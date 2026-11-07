@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Engineering approach in nine steps</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame { max-width: 1200px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg { width: 100%; min-width: 900px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Process · Engineering approach</p>
+    <h1>Engineering approach in nine steps</h1>
+    <svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="approach-overview-title approach-overview-desc">
+      <title id="approach-overview-title">Engineering approach in nine steps</title>
+      <desc id="approach-overview-desc">Overview of the engineering approach in nine ordered steps across three phases: think (read the brief, assumptions, risks), decide with evidence (measure, decide), and build and ship (build in stages, prove it, review rounds, production).</desc>
+      <defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+<rect x="40" y="48" width="880" height="112" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.14)" stroke-width="0.8"/>
+<text x="60" y="94" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">PHASE 1</text>
+<text x="60" y="116" fill="#2d3142" font-size="16" font-weight="600" font-family="'Geist', sans-serif">Think</text>
+<rect x="40" y="200" width="880" height="112" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.14)" stroke-width="0.8"/>
+<text x="60" y="236" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">PHASE 2</text>
+<text x="60" y="258" fill="#2d3142" font-size="16" font-weight="600" font-family="'Geist', sans-serif">Decide with</text>
+<text x="60" y="278" fill="#2d3142" font-size="16" font-weight="600" font-family="'Geist', sans-serif">evidence</text>
+<rect x="40" y="352" width="880" height="112" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.14)" stroke-width="0.8"/>
+<text x="60" y="398" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">PHASE 3</text>
+<text x="60" y="420" fill="#2d3142" font-size="16" font-weight="600" font-family="'Geist', sans-serif">Build and ship</text>
+<path d="M 344,104 H 384" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 528,104 H 568" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 344,256 H 384" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 344,408 H 384" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 528,408 H 568" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 712,408 H 752" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 640,140 V 172 Q 640,180 632,180 H 280 Q 272,180 272,188 V 220" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 456,292 V 324 Q 456,332 448,332 H 280 Q 272,332 272,340 V 372" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="200" y="68" width="144" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="200" y="68" width="144" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<rect x="208" y="76" width="20" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+<text x="218" y="85" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">01</text>
+<text x="272" y="105" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Read the brief</text>
+<text x="272" y="119" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">what must never</text>
+<text x="272" y="133" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">go wrong</text>
+<rect x="384" y="68" width="144" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="384" y="68" width="144" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<rect x="392" y="76" width="20" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+<text x="402" y="85" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">02</text>
+<text x="456" y="105" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Assumptions</text>
+<text x="456" y="119" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">defaults, not blockers</text>
+<rect x="568" y="68" width="144" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="568" y="68" width="144" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<rect x="576" y="76" width="20" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+<text x="586" y="85" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">03</text>
+<text x="640" y="105" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Risks first</text>
+<text x="640" y="119" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">pitfalls to tests</text>
+<rect x="200" y="220" width="144" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="200" y="220" width="144" height="72" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+<rect x="208" y="228" width="20" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+<text x="218" y="237" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">04</text>
+<text x="272" y="257" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Measure</text>
+<text x="272" y="271" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">pgbench, 7 strategies</text>
+<rect x="384" y="220" width="144" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="384" y="220" width="144" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<rect x="392" y="228" width="20" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+<text x="402" y="237" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">05</text>
+<text x="456" y="257" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Decide</text>
+<text x="456" y="271" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ADRs 0001-0006</text>
+<rect x="200" y="372" width="144" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="200" y="372" width="144" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<rect x="208" y="380" width="20" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+<text x="218" y="389" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">06</text>
+<text x="272" y="409" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Build in stages</text>
+<text x="272" y="423" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">every commit green</text>
+<rect x="384" y="372" width="144" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="384" y="372" width="144" height="72" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+<rect x="392" y="380" width="20" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+<text x="402" y="389" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">07</text>
+<text x="456" y="409" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Prove it</text>
+<text x="456" y="423" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">RED-proven tests</text>
+<text x="456" y="437" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">CI per commit</text>
+<rect x="568" y="372" width="144" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="568" y="372" width="144" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<rect x="576" y="380" width="20" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+<text x="586" y="389" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">08</text>
+<text x="640" y="409" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Review rounds</text>
+<text x="640" y="423" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">fresh eyes</text>
+<text x="640" y="437" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">fix with tests</text>
+<rect x="752" y="372" width="144" height="72" rx="6" fill="#f5f5f5"/>
+<rect x="752" y="372" width="144" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<rect x="760" y="380" width="20" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+<text x="770" y="389" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">09</text>
+<text x="824" y="409" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Production</text>
+<text x="824" y="423" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">12-factor, limits</text>
+<line x1="40" y1="520" x2="920" y2="520" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+<text x="40" y="540" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="112" y="532" width="14" height="10" rx="2" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+<text x="132" y="540" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Step that produces evidence</text>
+<rect x="296" y="532" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+<text x="316" y="540" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Step</text>
+<rect x="364" y="532" width="14" height="10" rx="2" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.14)" stroke-width="0.8"/>
+<text x="384" y="540" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Phase</text>
+    </svg>
+  </div>
+</body>
+</html>

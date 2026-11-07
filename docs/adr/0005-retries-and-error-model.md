@@ -23,23 +23,7 @@ Retries
   ([ADR 0004](0004-idempotency-key.md)) is how a client retries safely.
 - `SET LOCAL lock_timeout` bounds each lock wait.
 
-```mermaid
-flowchart LR
-    run[["run the transfer<br/>transaction"]]:::core --> res{"outcome"}:::check
-    res -- "40001 · 40P01 · 55P03<br/>rolled back by PostgreSQL" --> left{"attempt &lt; 3?"}:::check
-    left -- "yes · back off with jitter" --> run
-    left -- no --> busy["503 temporarily_unavailable<br/><small>Retry-After: 1</small>"]:::busy
-    res -- "57014 statement timeout<br/>or pool exhausted" --> busy
-    res -- committed --> ok["201 Created"]:::ok
-    res -- "404 · 422<br/>business error" --> biz["returned as is<br/><small>never retried</small>"]:::err
-    res -- "connection lost<br/>maybe during COMMIT" --> unk["500 · outcome unknown<br/><small>client retries with its Idempotency-Key</small>"]:::err
-
-    classDef core  fill:#DBEAFE,stroke:#1D4ED8,stroke-width:2.5px,color:#1E3A8A
-    classDef check fill:#FEF9C3,stroke:#CA8A04,stroke-width:1.5px,color:#713F12
-    classDef ok    fill:#DCFCE7,stroke:#16A34A,stroke-width:1.5px,color:#14532D
-    classDef err   fill:#FEE2E2,stroke:#DC2626,stroke-width:1.5px,color:#7F1D1D
-    classDef busy  fill:#FFEDD5,stroke:#EA580C,stroke-width:1.5px,color:#7C2D12
-```
+![Retry and error outcomes for a transfer](../diagrams/adr0005-retries.png)
 
 Error model
 

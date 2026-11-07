@@ -13,12 +13,20 @@ on:
 env:
   DATABASE_URL: postgres://transfers:transfers@localhost:5432/transfers
 
+permissions:
+  contents: read  # checkout only; no job writes to the repository
+
+# A new push to the same branch cancels the run it makes obsolete.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17.11-alpine
+        image: postgres:17.11-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
         env:
           POSTGRES_USER: transfers
           POSTGRES_PASSWORD: transfers
@@ -31,9 +39,11 @@ jobs:
           --health-timeout 3s
           --health-retries 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - run: rustup show  # installs the toolchain pinned in rust-toolchain.toml
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: cargo fmt --check
       - run: cargo clippy --all-targets --locked -- -D warnings
       - run: cargo test --locked
@@ -45,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17.11-alpine
+        image: postgres:17.11-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
         env:
           POSTGRES_USER: transfers
           POSTGRES_PASSWORD: transfers
@@ -58,10 +68,11 @@ jobs:
           --health-timeout 3s
           --health-retries 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Commits to check
         id: commits
         env:
@@ -103,3 +114,73 @@ jobs:
             fi
             echo "::endgroup::"
           done
+
+  # Line coverage of unit + integration tests, shown on the run summary and
+  # attached as lcov for editors and coverage services.
+  coverage:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.11-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
+        env:
+          POSTGRES_USER: transfers
+          POSTGRES_PASSWORD: transfers
+          POSTGRES_DB: transfers
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U transfers -d transfers"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show && rustup component add llvm-tools-preview
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
+        with:
+          tool: cargo-llvm-cov
+      - run: cargo llvm-cov --locked --lcov --output-path lcov.info
+      - name: Coverage summary
+        run: |
+          {
+            echo '### Test coverage'
+            echo '```'
+            cargo llvm-cov report --summary-only
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-lcov
+          path: lcov.info
+
+  # The real image and docker compose stack under HTTP load (k6, smoke
+  # profile): no 5xx, total balance unchanged, no negative balance, replays
+  # move money once, latency within budget. Report attached to the run.
+  load-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Start PostgreSQL and the service
+        run: |
+          mkdir -p loadtest/results && chmod a+w loadtest/results  # k6 runs as a non-root user
+          docker compose up -d --build --wait db app
+          for _ in $(seq 1 60); do curl -sf -o /dev/null http://localhost:8080/ready && break; sleep 1; done
+          curl -sf http://localhost:8080/ready
+      - name: k6 smoke load test
+        run: docker compose --profile loadtest run --rm k6
+      - name: Graceful shutdown drains and exits cleanly
+        if: always()
+        run: |
+          docker compose stop app
+          docker compose logs app | tail -n 20
+          test "$(docker inspect -f '{{.State.ExitCode}}' "$(docker compose ps -aq app)")" = 0
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: load-test-report
+          path: loadtest/results/

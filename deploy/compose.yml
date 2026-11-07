@@ -1,0 +1,96 @@
+# Production-style deployment on one Linux host with Docker.
+#
+#   internet -> Cloudflare (TLS, WAF, rate limit) -> tunnel -> caddy -> app -> db
+#
+# - No inbound port is opened on the host: cloudflared dials out to Cloudflare.
+# - PostgreSQL sits on an internal network with no route in or out.
+# - The image is referenced by digest and must carry the release workflow's
+#   signature; deploy/deploy.sh checks it, runs migrations as a release step,
+#   then replaces the app. Rules and runbook: docs/deployment.md.
+name: transfers
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:17.11-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: transfers
+      POSTGRES_DB: transfers
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    shm_size: 128mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U transfers -d transfers"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [backend]
+
+  # Release step, run by deploy.sh before the app is replaced (`--profile release`).
+  migrate:
+    <<: *hardening
+    image: ${IMAGE:?set IMAGE in deploy/.env}
+    profiles: [release]
+    restart: "no"
+    command: ["/usr/local/bin/internal-transfers", "migrate"]
+    environment:
+      DATABASE_URL: postgres://transfers:${POSTGRES_PASSWORD}@db:5432/transfers
+      LOG_FORMAT: json
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [backend]
+
+  app:
+    <<: *hardening
+    image: ${IMAGE:?set IMAGE in deploy/.env}
+    environment:
+      DATABASE_URL: postgres://transfers:${POSTGRES_PASSWORD}@db:5432/transfers
+      BIND_ADDR: 0.0.0.0:8080
+      RUN_MIGRATIONS: "false"
+      DB_MAX_CONNECTIONS: "10"
+      LOG_FORMAT: json
+      RUST_LOG: info
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 256
+    stop_grace_period: 30s
+    networks: [backend, edge]
+
+  caddy:
+    <<: *hardening
+    image: caddy:2.11.9-alpine@sha256:0bbb055bda6793c999bde78b1b5ce3e89f829fb031af2cf50056ea1246559fee
+    # The caddy binary carries a file capability; keep it in the bounding set.
+    cap_add: [NET_BIND_SERVICE]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    tmpfs: [/data, /config]
+    depends_on: [app]
+    networks: [edge]
+
+  cloudflared:
+    <<: *hardening
+    image: cloudflare/cloudflared:2026.10.7@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in deploy/.env}
+    depends_on: [caddy]
+    networks: [edge]
+
+networks:
+  backend:
+    internal: true
+  edge: {}
+
+volumes:
+  pgdata: {}

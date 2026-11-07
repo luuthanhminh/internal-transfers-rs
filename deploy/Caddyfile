@@ -1,0 +1,35 @@
+# In-host edge between the Cloudflare tunnel and the service. TLS is
+# terminated by Cloudflare; the tunnel reaches this listener over the private
+# `edge` network only. Port 8081 needs no extra capability (cap_drop: ALL).
+{
+	auto_https off
+	admin off
+}
+
+:8081 {
+	# Requests to this API are a few hundred bytes; refuse large bodies early.
+	request_body {
+		max_size 16KB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+
+	# The landing page is the interactive API reference.
+	redir / /docs 302
+
+	reverse_proxy app:8080 {
+		health_uri /ready
+		health_interval 10s
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

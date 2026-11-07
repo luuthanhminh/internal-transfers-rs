@@ -30,3 +30,11 @@ updates:
     directories: ["/", "/deploy"]
     schedule:
       interval: weekly
+    ignore:
+      # A PostgreSQL major cannot start on the previous major's data directory
+      # (pg_upgrade or dump/restore), and a k6 major can change the script API.
+      # Both are planned upgrades, not weekly bumps; minors and digests still come.
+      - dependency-name: postgres
+        update-types: ["version-update:semver-major"]
+      - dependency-name: grafana/k6
+        update-types: ["version-update:semver-major"]

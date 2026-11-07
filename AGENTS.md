@@ -22,6 +22,8 @@ concurrent transfers is the core requirement; everything else is secondary.
 | What CI runs on every commit | `make check` — run before each commit |
 | Dependencies: advisories, licenses, sources | `cargo deny check` (config `deny.toml`; also in CI `security`) |
 | Full stack in Docker | `docker compose up --build` |
+| HTTP load test (k6, Docker) | `make loadtest` (`PROFILE=load` for the heavier run; [loadtest/README.md](loadtest/README.md)) |
+| Release and deploy | tag `vX.Y.Z` → `release.yml`; on the host `deploy/deploy.sh <image>@sha256:…` ([docs/deployment.md](docs/deployment.md)); humans only |
 
 `DATABASE_URL` comes from `.env` (or `.env.example`) via the Makefile. Plain
 `cargo test` needs it exported.
@@ -54,6 +56,9 @@ src/config.rs environment configuration (12-factor), validated at startup
 migrations/   append-only; never edit an applied migration (`make migration name=x`)
 tests/api/    integration tests through the real router, one DB per test
 bench/        pgbench harness that justifies the locking strategy
+loadtest/     k6 HTTP load test with invariant checks (runs in CI)
+deploy/       single-host production stack, signed-image deploy script
+.claude/      skills, settings (permission rules) and hooks for agents
 ```
 
 ## Invariants (do not break)
@@ -95,6 +100,16 @@ bench/        pgbench harness that justifies the locking strategy
   old data → upgrade).
 - Breaking shape changes go expand → deploy → backfill → switch → contract,
   across releases; the previous binary must keep working on the new schema.
+
+## Guardrails
+
+`.claude/settings.json` enforces part of this file: edits to applied
+migrations, reading `.env` / `deploy/.env`, `git push`, `reset --hard`,
+`checkout --` and `clean` are denied; `git commit` asks. Hooks run `cargo fmt`
+after each edit and refuse to end a turn while `cargo fmt --check` or clippy
+fail (`.claude/hooks/lint-gate.sh`). A new applied migration is added to the
+deny list in the same commit. Do not weaken a guardrail to get past it; raise
+it instead.
 
 ## Skills
 

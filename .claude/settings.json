@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(make check)",
+      "Bash(make lint)",
+      "Bash(make test)",
+      "Bash(make db-up)",
+      "Bash(cargo build:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo clippy:*)",
+      "Bash(cargo fmt:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)"
+    ],
+    "ask": [
+      "Bash(git commit:*)",
+      "Bash(docker compose down:*)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git checkout -- :*)",
+      "Bash(git clean:*)",
+      "Read(./.env)",
+      "Read(./deploy/.env)",
+      "Edit(./migrations/0001_create_accounts_and_transactions.sql)",
+      "Edit(./migrations/0002_limit_account_balance.sql)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && cargo fmt --quiet 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lint-gate.sh",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  }
+}

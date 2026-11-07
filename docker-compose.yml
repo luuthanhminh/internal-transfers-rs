@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:17.11-alpine
+    environment:
+      POSTGRES_USER: transfers
+      POSTGRES_PASSWORD: transfers
+      POSTGRES_DB: transfers
+    # Host port is configurable so it never collides with a local PostgreSQL on 5432.
+    ports:
+      - "${DB_PORT:-56432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U transfers -d transfers"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgres://transfers:transfers@db:5432/transfers
+      BIND_ADDR: 0.0.0.0:8080
+      RUST_LOG: info
+      LOG_FORMAT: ${LOG_FORMAT:-text}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Time allowed for in-flight requests to drain after SIGTERM.
+    stop_grace_period: 30s

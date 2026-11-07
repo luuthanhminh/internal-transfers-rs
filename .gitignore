@@ -1,0 +1,7 @@
+/target
+.env
+# Only the shared project skills are tracked under .claude/.
+/.claude/*
+!/.claude/skills/
+# Local plans before a PR exists (see the plan skill).
+/plans/

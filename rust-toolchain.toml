@@ -1,0 +1,5 @@
+# Same toolchain for developers, agents, CI and the Docker build (rustup reads
+# this file and installs it on first use). MSRV is `rust-version` in Cargo.toml.
+[toolchain]
+channel = "1.99.1"
+components = ["rustfmt", "clippy"]

@@ -10,6 +10,12 @@ transfers that stay correct under concurrent load.
 Live demo: **https://transfers.minhlt.com/docs** (interactive API reference;
 rate-limited, data is disposable).
 
+![How the service is built, proven, shipped and run](docs/diagrams/overview.png)
+
+The detail behind each stage: [AI-assisted delivery](docs/ai-assisted-delivery.md)
+(the harness), [architecture](docs/architecture.md) (the service) and
+[deployment](docs/deployment.md) (release and the live host).
+
 ## For reviewers: a 10-minute tour
 
 | If you want to see | Look at |

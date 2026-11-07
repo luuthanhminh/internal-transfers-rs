@@ -120,6 +120,14 @@ What the independent review rounds caught, and how each was closed:
 | Lock-dependent tests relied on sleeps | tests wait on `pg_stat_activity` instead |
 | MSRV stated lower than a dependency requires | corrected to 1.94; toolchain pinned for everyone |
 
+Static analysis findings get the same treatment. CodeQL (`security-and-quality`)
+raised three high-severity `rust/cleartext-logging` alerts on
+`tests/api/helpers.rs`. Checked against the code, they are assertion messages
+that print the response body of synthetic test accounts when a test fails;
+production code logs no balances or amounts, and `Config`'s `Debug` redacts the
+database password. They were dismissed as "used in tests" with that reasoning
+recorded on each alert, rather than silenced in the code.
+
 ## Why the language is not the bottleneck
 
 With an agent writing the code, the scarce skills are deciding what must be

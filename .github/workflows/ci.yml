@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      range:
+        description: "Commits for every-commit to check, e.g. the full history: $(git rev-list --max-parents=0 HEAD)..HEAD; empty = latest commit"
+        required: false
+        default: ""
+
+env:
+  DATABASE_URL: postgres://transfers:transfers@localhost:5432/transfers
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.11-alpine
+        env:
+          POSTGRES_USER: transfers
+          POSTGRES_PASSWORD: transfers
+          POSTGRES_DB: transfers
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U transfers -d transfers"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup show  # installs the toolchain pinned in rust-toolchain.toml
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --locked -- -D warnings
+      - run: cargo test --locked
+
+  # `check` covers the tip. This job checks that EVERY commit of the push or PR
+  # builds, passes fmt, clippy and the tests, and starts (`/health` = 200), so
+  # bisect, revert and cherry-pick never land on a broken commit.
+  every-commit:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.11-alpine
+        env:
+          POSTGRES_USER: transfers
+          POSTGRES_PASSWORD: transfers
+          POSTGRES_DB: transfers
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U transfers -d transfers"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: Swatinem/rust-cache@v2
+      - name: Commits to check
+        id: commits
+        env:
+          INPUT_RANGE: ${{ inputs.range }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [ -n "$INPUT_RANGE" ]; then range="$INPUT_RANGE"
+          elif [ -n "$PR_BASE" ]; then range="$PR_BASE..$PR_HEAD"
+          elif git merge-base --is-ancestor "$PUSH_BEFORE" HEAD 2>/dev/null; then range="$PUSH_BEFORE..HEAD"
+          else range="HEAD~1..HEAD"  # new branch or force push: the latest commit
+          fi
+          echo "range=$range" >> "$GITHUB_OUTPUT"
+          git log --oneline --reverse "$range"
+      - name: Build, test and start each commit
+        env:
+          RANGE: ${{ steps.commits.outputs.range }}
+        run: |
+          for sha in $(git rev-list --reverse "$RANGE"); do
+            git checkout -q "$sha"
+            echo "::group::$(git log -1 --format='%h %s')"
+            rustup show active-toolchain || rustup show
+            cargo fmt --check
+            cargo clippy --all-targets --locked -- -D warnings
+            cargo test --locked
+            if [ -d src/routes ]; then
+              cargo build --locked
+              # A fresh database per commit: migrations of newer commits must not
+              # make an older binary refuse to start.
+              psql "$DATABASE_URL" -c "DROP DATABASE IF EXISTS every_commit" -c "CREATE DATABASE every_commit"
+              DATABASE_URL="${DATABASE_URL%/*}/every_commit" BIND_ADDR=127.0.0.1:18099 \
+                target/debug/internal-transfers &
+              pid=$!
+              for _ in $(seq 1 60); do curl -sf -o /dev/null http://127.0.0.1:18099/health && break; sleep 0.5; done
+              curl -sf http://127.0.0.1:18099/health
+              kill -TERM "$pid"
+              wait "$pid"
+            fi
+            echo "::endgroup::"
+          done

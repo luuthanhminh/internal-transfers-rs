@@ -1,0 +1,42 @@
+name: Security
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 2 * * 1" # weekly: new advisories appear without any code change
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Dependencies: RustSec advisories, yanked crates, licenses, crate sources (deny.toml).
+  cargo-deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          command: check
+          arguments: --all-features
+
+  # Secrets anywhere in the git history.
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact --no-banner
+
+  # The runtime image (Debian packages) - what lockfile scanners cannot see.
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t internal-transfers:ci .
+      - name: Trivy (HIGH and CRITICAL with a fix available)
+        run: >
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.0
+          image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed --no-progress internal-transfers:ci

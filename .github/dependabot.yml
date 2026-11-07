@@ -1,0 +1,27 @@
+# Weekly version-update PRs. Advisories are caught by the weekly `security`
+# workflow (cargo-deny); PRs opened the moment an advisory is published need
+# "Dependabot security updates" turned on in the repository settings.
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # Patch releases only: in 0.x crates a "minor" bump (axum 0.8 → 0.9) is a
+      # breaking change and would turn the whole group red. Minors come as
+      # separate PRs.
+      cargo-patch:
+        update-types: [patch]
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # The Rust image must match `rust-toolchain.toml` (CI and developers use
+      # that file, the Docker build uses this image). Bump both together by hand.
+      - dependency-name: rust
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

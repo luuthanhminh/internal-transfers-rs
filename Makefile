@@ -1,4 +1,4 @@
-.PHONY: up down db-up run test lint fmt check migration
+.PHONY: up down db-up run test lint fmt check deny loadtest migration
 
 # Load .env when present (falls back to .env.example values otherwise).
 ENV_FILE := $(if $(wildcard .env),.env,.env.example)
@@ -32,6 +32,18 @@ fmt:
 	cargo fmt
 
 check: lint test
+
+## Dependencies: RustSec advisories, licenses, sources (needs `cargo install cargo-deny`).
+deny:
+	cargo deny check
+
+## HTTP load test (k6) against the docker compose stack: PROFILE=smoke (default) or load.
+## Report: loadtest/results/report.html; details in loadtest/README.md.
+loadtest:
+	mkdir -p loadtest/results && chmod a+w loadtest/results
+	docker compose up -d --build --wait db app
+	@for i in $$(seq 1 60); do curl -sf -o /dev/null http://localhost:$${APP_PORT:-8080}/ready && break; sleep 1; done
+	docker compose --profile loadtest run --rm k6
 
 ## New migration file with the next version: make migration name=add_account_status
 ## Rules: docs/adr/0006-forward-only-migrations.md

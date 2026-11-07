@@ -1,7 +1,13 @@
 /target
 .env
-# Only the shared project skills are tracked under .claude/.
+# Only the shared agent harness (skills, settings, hooks) is tracked under .claude/.
 /.claude/*
 !/.claude/skills/
+!/.claude/settings.json
+!/.claude/hooks/
 # Local plans before a PR exists (see the plan skill).
 /plans/
+# Load test output (CI attaches the report to the run instead).
+/loadtest/results/
+# Server-side deployment settings, including secrets.
+/deploy/.env

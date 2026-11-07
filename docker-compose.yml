@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:17.11-alpine
+    image: postgres:17.11-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
     environment:
       POSTGRES_USER: transfers
       POSTGRES_PASSWORD: transfers
@@ -28,3 +28,18 @@ services:
         condition: service_healthy
     # Time allowed for in-flight requests to drain after SIGTERM.
     stop_grace_period: 30s
+
+  # HTTP load test (k6). Starts only with `--profile loadtest`; see `make loadtest`.
+  k6:
+    image: grafana/k6:1.8.2@sha256:00fdcebafbc86cb0137d429529b1caa401a02e09025f02fc74866fa6e2b004d8
+    profiles: [loadtest]
+    environment:
+      BASE_URL: ${BASE_URL:-http://app:8080}
+      PROFILE: ${PROFILE:-smoke}
+      P95_MS: ${P95_MS:-250}
+      K6_WEB_DASHBOARD: "true"
+      K6_WEB_DASHBOARD_EXPORT: /results/report.html
+    volumes:
+      - ./loadtest:/scripts:ro
+      - ./loadtest/results:/results
+    command: ["run", "--summary-export=/results/summary.json", "/scripts/transfers.js"]

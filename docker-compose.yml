@@ -31,7 +31,7 @@ services:
 
   # HTTP load test (k6). Starts only with `--profile loadtest`; see `make loadtest`.
   k6:
-    image: grafana/k6:1.8.2@sha256:00fdcebafbc86cb0137d429529b1caa401a02e09025f02fc74866fa6e2b004d8
+    image: grafana/k6:1.8.3@sha256:2cd9cd09e4119340a122aaf06f30cf3009c19db23b87954909fba0d3eda58e08
     profiles: [loadtest]
     environment:
       BASE_URL: ${BASE_URL:-http://app:8080}

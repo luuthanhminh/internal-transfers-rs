@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cargo build --release --locked \
     && cp target/release/internal-transfers /usr/local/bin/internal-transfers
 
-FROM debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
+FROM debian:bookworm-slim@sha256:e67eeead736ff7bbe258ef088bff683635c561b1fcfefad0806c1df4ab49ce0e
 # No CA bundle needed: TLS to PostgreSQL uses rustls with bundled webpki roots.
 RUN useradd --system --no-create-home --uid 10001 app
 COPY --from=build /usr/local/bin/internal-transfers /usr/local/bin/internal-transfers
